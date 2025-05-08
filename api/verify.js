@@ -6,26 +6,28 @@ const GUILD_ID         = process.env.GUILD_ID;
 const VERIFIED_ROLE_ID = process.env.VERIFIED_ROLE_ID;
 
 module.exports = async (req, res) => {
-  console.log("Incoming data:", req.body);  // <== Add this line
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Only POST allowed' });
   }
 
+  let body = req.body;
 
-  // Map Zoho payload field names to variables
-  const {
-    email: Email,
-    discord_id: Discord_ID,
-    first_name: First_Name,
-    last_name: Last_Name,
-    'Mobile No': Mobile_No,
-    country: Country
-  } = body;
+  if (req.headers['content-type'] === 'application/x-www-form-urlencoded') {
+    body = Object.fromEntries(new URLSearchParams(body));
+  }
 
-  if (!Discord_ID) return res.status(400).json({ error: 'Missing Discord_ID' });
+  console.log("Incoming body:", body); // ✅ Debug payload from Zoho
 
-  const url = `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${Discord_ID}/roles/${VERIFIED_ROLE_ID}`;
+  const email      = body.email;
+  const discord_id = body.discord_id;
+  const first_name = body.first_name;
+  const last_name  = body.last_name;
+  const mobile     = body["Mobile No"] || body["mobile_no"] || body.mobile || null;
+  const country    = body.country;
+
+  if (!discord_id) return res.status(400).json({ error: 'Missing discord_id' });
+
+  const url = `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discord_id}/roles/${VERIFIED_ROLE_ID}`;
 
   try {
     const response = await fetch(url, {
@@ -42,10 +44,10 @@ module.exports = async (req, res) => {
       return res.status(502).json({ error: 'Discord API failed', details: text });
     }
 
-    console.log(`✅ Assigned verified role to ${Discord_ID} (${Email})`);
+    console.log(`✅ Assigned verified role to ${discord_id} (${email})`);
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('Fetch error:', err);
+    console.error('❌ Fetch error:', err);
     return res.status(500).json({ error: 'Internal error' });
   }
 };
