@@ -6,14 +6,12 @@ const GUILD_ID         = process.env.GUILD_ID;
 const VERIFIED_ROLE_ID = process.env.VERIFIED_ROLE_ID;
 
 module.exports = async (req, res) => {
+  console.log("Incoming data:", req.body);  // <== Add this line
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Only POST allowed' });
   }
 
-  let body = req.body;
-  if (req.headers['content-type'] === 'application/x-www-form-urlencoded') {
-    body = Object.fromEntries(new URLSearchParams(body));
-  }
 
   // Map Zoho payload field names to variables
   const {
